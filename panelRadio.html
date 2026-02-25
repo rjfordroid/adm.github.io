@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Radio</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:white;
+  font-family:sans-serif;
+  padding:20px;
+}
+
+h1{text-align:center;}
+
+form{
+  background:#1c1c1c;
+  padding:20px;
+  border-radius:8px;
+  max-width:400px;
+  margin:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+input{
+  padding:10px;
+  border:none;
+  border-radius:4px;
+}
+
+button{
+  padding:8px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+#sendBtn{background:#00c853;color:white;}
+#addTrack{background:#2962ff;color:white;}
+
+#audioList{
+  margin-top:40px;
+  max-width:600px;
+  margin:auto;
+}
+
+.audioItem{
+  background:#1e1e1e;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:6px;
+}
+
+.editBtn{background:#ffab00;color:black;margin-right:5px;}
+.deleteBtn{background:#d50000;color:white;}
+.trackBtn{margin-top:5px;}
+</style>
+</head>
+<body>
+
+<h1>🎧 Admin Radio</h1>
+
+<form id="audioForm">
+  <input type="text" id="title" placeholder="Titre episode" required>
+  <input type="text" id="author" placeholder="Auteur" required>
+  <div class="flex">
+      <input type="text" id="url" placeholder="URL Audio" required>
+      <button type="button" id="addTrack">Add</button>
+  </div>
+
+  <button type="submit" id="sendBtn">Envoyer</button>
+</form>
+
+<h2>Prévisualisation Playlist</h2>
+<div id="previewPlaylist"></div>
+
+<h2>Episodes</h2>
+<div id="audioList">
+  <div>
+      <strong>Au tour de toi, dans ce monde</strong><br>
+      <small>Ruban Joseph</small><br>
+      <small>la belle vue de la nature</small><br><br>
+      <button class="editBtn">Edit</button>
+      <button class="deleteBtn">Delete</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+var firebaseConfig = {
+  apiKey: "AIzaSyAQeHWr_vUiQmVVgJJ_cOF9qrCCLd7IJNc",
+  authDomain: "ayiweb.firebaseapp.com",
+  databaseURL: "https://ayiweb-default-rtdb.firebaseio.com",
+  projectId: "ayiweb",
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// DOM
+const form = document.getElementById("audioForm");
+const titleInput = document.getElementById("title");
+const authorInput = document.getElementById("author");
+const urlInput = document.getElementById("url");
+const addTrackBtn = document.getElementById("addTrack");
+const preview = document.getElementById("previewPlaylist");
+const audioList = document.getElementById("audioList");
+
+// Playlist tanporè ak editKey
+let tracks = [];
+let editKey = null;
+
+// 🔥 ADD TRACK + PREVIEW
+addTrackBtn.addEventListener("click", ()=>{
+  const url = urlInput.value.trim();
+  if(!url){
+    alert("Mete URL audio a");
+    return;
+  }
+  tracks.push({url});
+  renderPreview();
+  urlInput.value = "";
+});
+
+// 🔥 RENDER PREVIEW
+function renderPreview(){
+  preview.innerHTML = "";
+  tracks.forEach((track,index)=>{
+    const div = document.createElement("div");
+    div.style.marginBottom = "10px";
+    div.innerHTML = `
+      <audio controls src="${track.url}" style="width:100%"></audio>
+      <button class="trackBtn" onclick="removeTrack(${index})" style="background:red;color:white;">Supprimer</button>
+    `;
+    preview.appendChild(div);
+  });
+}
+
+// 🔥 REMOVE TRACK
+function removeTrack(index){
+  tracks.splice(index,1);
+  renderPreview();
+}
+window.removeTrack = removeTrack;
+
+// 🔥 ENVOYE OU UPDATE EPISODE
+form.addEventListener("submit", (e)=>{
+  e.preventDefault();
+  if(tracks.length===0){
+    alert("Ajoute omwen 1 audio");
+    return;
+  }
+
+  if(editKey){
+    // Update episode
+    db.ref("episodes/"+editKey).set({
+      title: titleInput.value,
+      author: authorInput.value,
+      addedAt: Date.now(),
+      tracks: tracks
+    });
+    alert("Episode mis à jour !");
+  }else{
+    // Add new episode
+    db.ref("episodes").push({
+      title: titleInput.value,
+      author: authorInput.value,
+      addedAt: Date.now(),
+      tracks: tracks
+    });
+    alert("Episode ajouté !");
+  }
+
+  form.reset();
+  tracks = [];
+  editKey = null;
+  renderPreview();
+});
+
+// 🔥 LISTE EPISODES
+db.ref("episodes").on("value", snapshot=>{
+  audioList.innerHTML = "";
+  snapshot.forEach(child=>{
+    const key = child.key;
+    const data = child.val();
+
+    const div = document.createElement("div");
+    div.className = "audioItem";
+
+    let trackCount = data.tracks ? data.tracks.length : 0;
+
+    div.innerHTML = `
+      <strong>${data.title}</strong><br>
+      <small>${data.author}</small><br>
+      <small>${trackCount} tracks</small><br><br>
+      <button class="editBtn">Edit</button>
+      <button class="deleteBtn">Delete</button>
+    `;
+
+    // Edit episode
+    div.querySelector(".editBtn").addEventListener("click", ()=>{
+      titleInput.value = data.title;
+      authorInput.value = data.author;
+      tracks = data.tracks ? [...data.tracks] : [];
+      renderPreview();
+      editKey = key;
+      window.scrollTo({top:0, behavior:"smooth"});
+    });
+
+    // Delete episode
+    div.querySelector(".deleteBtn").addEventListener("click", ()=>{
+      if(confirm("Supprimer cet episode ?")){
+        db.ref("episodes/"+key).remove();
+      }
+    });
+
+    audioList.appendChild(div);
+  });
+});
+</script>
+
+</body>
+</html>

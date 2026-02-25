@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Inscriptions</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.admin-panel {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+h2 {
+  color: #333;
+  font-size: 2em;
+  margin-bottom: 20px;
+  position: relative;
+  display: inline-block;
+}
+
+h2::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 60%;
+  height: 3px;
+  background: linear-gradient(90deg, #ff6600, transparent);
+}
+
+.stats-bar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.stats-bar p {
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.stats-bar span {
+  background: rgba(255,255,255,0.2);
+  padding: 8px 16px;
+  border-radius: 50px;
+  margin-left: 10px;
+}
+
+.export-btn {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+/* ===== CARDS GRID ===== */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  position: relative;
+}
+
+.card-header h3 {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+
+.card-header .card-email {
+  font-size: 0.85em;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  word-break: break-word;
+}
+
+.card-header .card-email::before {
+  content: '✉';
+  margin-right: 5px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #eee;
+}
+
+.info-label {
+  font-weight: 600;
+  min-width: 80px;
+  color: #667eea;
+}
+
+.info-value {
+  color: #333;
+  flex: 1;
+  word-break: break-word;
+}
+
+.whatsapp-link {
+  color: #25D366;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.whatsapp-link:hover {
+  text-decoration: underline;
+}
+
+.whatsapp-link::before {
+  content: '📱';
+  margin-right: 5px;
+}
+
+.card-footer {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #eee;
+}
+
+.card-date {
+  font-size: 0.85em;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-date::before {
+  content: '📅';
+}
+
+.delete-btn {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.delete-btn:hover {
+  background: #ff6b81;
+  transform: scale(1.05);
+}
+
+.delete-btn::before {
+  content: '🗑';
+}
+
+/* Badges pour les niveaux */
+.level-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.level-badge.debutant {
+  background: #ffd93d;
+  color: #856404;
+}
+
+.level-badge.intermediaire {
+  background: #6c5ce7;
+  color: white;
+}
+
+.level-badge.avance {
+  background: #00b894;
+  color: white;
+}
+
+/* Loading animation */
+.loading {
+  text-align: center;
+  padding: 50px;
+  color: #666;
+  font-size: 1.2em;
+  grid-column: 1 / -1;
+}
+
+.loading::after {
+  content: '...';
+  animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px;
+  color: #666;
+  font-size: 1.2em;
+  grid-column: 1 / -1;
+  background: #f8f9fa;
+  border-radius: 15px;
+}
+
+.empty-state::before {
+  content: '📋';
+  display: block;
+  font-size: 3em;
+  margin-bottom: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-panel {
+    padding: 15px;
+  }
+  
+  .stats-bar {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  h2 {
+    font-size: 1.5em;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header h3 {
+    font-size: 1em;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .info-label {
+    min-width: auto;
+  }
+  
+  .card-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="admin-panel" id="adminPanel">
+  <h2>Liste des inscrits</h2>
+  
+  <div class="stats-bar">
+    <p>Total des inscriptions : <span id="totalCount">0</span></p>
+    <button class="export-btn" onclick="exportCSV()">📥 Exporter CSV</button>
+  </div>
+
+  <!-- CARDS GRID -->
+  <div class="cards-grid" id="cardsGrid"></div>
+</div>
+
+<script>
+// CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyAQeHWr_vUiQmVVgJJ_cOF9qrCCLd7IJNc",
+  authDomain: "ayiweb.firebaseapp.com",
+  databaseURL: "https://ayiweb-default-rtdb.firebaseio.com",
+  projectId: "ayiweb",
+  storageBucket: "ayiweb.appspot.com",
+  messagingSenderId: "115054504556",
+  appId: "1:115054504556:web:ccd713ba01dd8f02830649"
+};
+
+// Initialiser Firebase
+firebase.initializeApp(firebaseConfig);
+var database = firebase.database();
+
+// Fonction pour obtenir la classe du badge de niveau
+function getLevelBadgeClass(level) {
+  switch(level?.toLowerCase()) {
+    case 'débutant':
+    case 'debutant':
+      return 'debutant';
+    case 'intermédiaire':
+    case 'intermediaire':
+      return 'intermediaire';
+    case 'avancé':
+    case 'avance':
+      return 'avance';
+    default:
+      return '';
+  }
+}
+
+function loadData() {
+  database.ref("RJFORDROID/FORMATION").on("value", snapshot => {
+    const cardsGrid = document.getElementById("cardsGrid");
+    cardsGrid.innerHTML = "";
+    let total = 0;
+    let csvContent = "Nom,Email,WhatsApp,Niveau,Blog,Source,Date\n";
+
+    if (!snapshot.exists()) {
+      cardsGrid.innerHTML = '<div class="empty-state">Aucune inscription pour le moment</div>';
+      document.getElementById("totalCount").innerText = "0";
+      window.csvData = "Nom,Email,WhatsApp,Niveau,Blog,Source,Date\n";
+      return;
+    }
+
+    snapshot.forEach(child => {
+      total++;
+      let data = child.val();
+      let key = child.key;
+
+      // Ajouter au CSV
+      csvContent += `"${data.name || ''}","${data.email || ''}","${data.whatsapp || ''}","${data.level || ''}","${data.blogStatus || ''}","${data.referenceSource || ''}","${data.date || ''}"\n`;
+
+      // Créer une carte
+      const levelClass = getLevelBadgeClass(data.level);
+      
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-header">
+          <h3>${data.name || 'Non renseigné'}</h3>
+          <div class="card-email">${data.email || 'Non renseigné'}</div>
+        </div>
+        <div class="card-body">
+          <div class="info-row">
+            <span class="info-label">WhatsApp:</span>
+            <span class="info-value">
+              ${data.whatsapp ? 
+                `<a href="https://wa.me/${data.whatsapp.replace(/\s+/g, '')}" target="_blank" class="whatsapp-link">${data.whatsapp}</a>` : 
+                'Non renseigné'}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Niveau:</span>
+            <span class="info-value">
+              <span class="level-badge ${levelClass}">${data.level || 'Non renseigné'}</span>
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Blog:</span>
+            <span class="info-value">${data.blogStatus || 'Non renseigné'}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Source:</span>
+            <span class="info-value">${data.referenceSource || 'Non renseigné'}</span>
+          </div>
+          ${data.address ? `
+          <div class="info-row">
+            <span class="info-label">Adresse:</span>
+            <span class="info-value">${data.address}</span>
+          </div>
+          ` : ''}
+        </div>
+        <div class="card-footer">
+          <span class="card-date">${data.date || 'Date inconnue'}</span>
+          <button class="delete-btn" onclick="deleteUser('${key}')">Supprimer</button>
+        </div>
+      `;
+      
+      cardsGrid.appendChild(card);
+    });
+
+    document.getElementById("totalCount").innerText = total;
+    window.csvData = csvContent;
+  });
+}
+
+function deleteUser(key) {
+  if(confirm("Êtes-vous sûr de vouloir supprimer cette inscription ?")) {
+    database.ref("RJFORDROID/FORMATION/" + key).remove()
+      .then(() => {
+        // Message de succès (optionnel)
+        console.log("Inscription supprimée avec succès");
+      })
+      .catch(error => {
+        alert("Erreur lors de la suppression: " + error.message);
+      });
+  }
+}
+
+function exportCSV() {
+  if (!window.csvData || window.csvData === "Nom,Email,WhatsApp,Niveau,Blog,Source,Date\n") {
+    alert("Aucune donnée à exporter");
+    return;
+  }
+  
+  const blob = new Blob([window.csvData], { type: "text/csv;charset=utf-8;" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "inscriptions_formation_blog.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+// Charger les données au démarrage
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload & Gallery Drive – Version corrigée</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f9fbfd;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h3 {
+      border-bottom: 2px solid #4a90e2;
+      padding-bottom: 6px;
+      color: #1a2b4c;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin: 20px 0 10px;
+    }
+
+    input[type="file"] {
+      padding: 8px 12px;
+      border: 1px solid #b0c4de;
+      border-radius: 30px;
+      background: white;
+      font-size: 14px;
+    }
+
+    button {
+      background: #4a90e2;
+      border: none;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 70, 150, 0.2);
+      transition: all 0.2s;
+      border: 1px solid #2a6fc9;
+    }
+
+    button:hover {
+      background: #2a6fc9;
+      transform: scale(1.02);
+    }
+
+    button:active {
+      background: #1a4f99;
+    }
+
+    #loader {
+      display: none;
+      border: 4px solid #e9f0f9;
+      border-top: 4px solid #4a90e2;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 10px 0;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      background: #ffffffd9;
+      padding: 20px;
+      border-radius: 24px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8), 0 8px 20px rgba(0,20,50,0.1);
+      margin-top: 15px;
+      backdrop-filter: blur(2px);
+      min-height: 200px;
+    }
+
+    .image-card {
+      background: white;
+      border-radius: 20px;
+      padding: 14px 12px 12px 12px;
+      box-shadow: 0 8px 18px rgba(0,20,40,0.08);
+      width: 150px;
+      transition: transform 0.1s ease;
+      border: 1px solid #eef4fc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .image-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 25px rgba(35, 80, 140, 0.15);
+      border-color: #b8d4f9;
+    }
+
+    .image-card img {
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #f0f5fe;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .file-id {
+      font-size: 11px;
+      background: #f1f7fe;
+      width: 100%;
+      padding: 6px 0;
+      margin: 10px 0 6px;
+      border-radius: 40px;
+      text-align: center;
+      color: #1f3a68;
+      font-family: monospace;
+      word-break: break-all;
+      border: 1px dashed #9bc0eb;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-group button {
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 40px;
+      background: white;
+      color: #1f3a68;
+      border: 1px solid #b6d0e9;
+      font-weight: 500;
+      box-shadow: none;
+      flex: 1 0 auto;
+    }
+
+    .btn-group button:hover {
+      background: #e1efff;
+      border-color: #4a90e2;
+      color: #0c2b55;
+    }
+
+    .btn-group .delete-btn {
+      color: #b13e3e;
+      border-color: #f3bcbc;
+    }
+    .btn-group .delete-btn:hover {
+      background: #ffe2e2;
+      border-color: #d45a5a;
+    }
+
+    #debug-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h3>📤 Envoyer une image vers Google Drive</h3>
+<div class="toolbar">
+  <input type="file" id="file" accept="image/*">
+  <button onclick="upload()">⬆️ Envoyer</button>
+  <!-- loader visible pendant upload -->
+  <div id="loader"></div>
+</div>
+
+<hr>
+
+<div style="display: flex; align-items: center; justify-content: space-between;">
+  <h3>🖼️ Images sauvegardées (IndexedDB)</h3>
+  <!-- BOUTON RAFRAÎCHIR explicite pour re-afficher les images -->
+  <button id="refreshBtn" onclick="loadImages()" style="background: #3e70a1; padding: 8px 25px;">⟳ Rafraîchir la galerie</button>
+  <button onclick="debugDatabase()" style="background: #6c757d;">🔍 Debug DB</button>
+</div>
+
+<!-- Grille d'images -->
+<div id="gallery">
+  <!-- les images apparaîtront ici -->
+</div>
+
+<!-- Zone de debug -->
+<div id="debug-info"></div>
+
+<script>
+let db;
+const request = indexedDB.open("DriveImagesDB", 2); // Incrémenter la version pour forcer la mise à jour
+
+request.onupgradeneeded = e => {
+  db = e.target.result;
+  // Supprimer l'ancien store s'il existe et le recréer proprement
+  if (db.objectStoreNames.contains('images')) {
+    db.deleteObjectStore('images');
+  }
+  db.createObjectStore("images", { keyPath: "id", autoIncrement: true });
+  console.log("Store 'images' créé");
+};
+
+request.onsuccess = e => {
+  db = e.target.result;
+  console.log("Base de données ouverte avec succès");
+  loadImages();  // charge au démarrage
+};
+
+request.onerror = e => {
+  console.error('IndexedDB error:', e.target.error);
+  alert('Impossible d\'ouvrir la base de données');
+};
+
+// Fonction pour extraire l'ID du drive depuis l'URL (version plus robuste)
+function extractDriveId(url) {
+  if (!url) return '';
+  console.log("Extraction ID depuis URL:", url);
+  
+  // Essayer plusieurs formats d'URL Google Drive
+  const patterns = [
+    /\/d\/([a-zA-Z0-9_-]+)/,           // format /d/ID
+    /id=([a-zA-Z0-9_-]+)/,              // format ?id=ID
+    /file\/d\/([a-zA-Z0-9_-]+)/,        // format /file/d/ID
+    /drive.google.com\/.*?([a-zA-Z0-9_-]{25,})/ // ID qui ressemble à un ID Drive (au moins 25 caractères)
+  ];
+  
+  for (let pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      console.log("ID trouvé avec pattern", pattern, ":", match[1]);
+      return match[1];
+    }
+  }
+  
+  // Si aucun pattern ne correspond, vérifier si l'URL elle-même est un ID
+  if (url.length > 20 && !url.includes('/')) {
+    console.log("L'URL semble être directement un ID:", url);
+    return url;
+  }
+  
+  console.log("Aucun ID trouvé dans l'URL");
+  return '';
+}
+
+// Fonction principale pour afficher les images
+function loadImages() {
+  if (!db) {
+    alert("Base de données pas encore prête. Attendez un instant puis réessayez.");
+    return;
+  }
+
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = '<div style="width:100%; padding:30px; text-align:center; color:#5577aa;">⏳ Chargement des images...</div>';
+
+  const tx = db.transaction("images", "readonly");
+  const store = tx.objectStore("images");
+
+  const imagesData = [];  // on collecte pour éviter l'affichage asynchrone fragmenté
+
+  store.openCursor().onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) {
+      console.log("Image trouvée en base:", cursor.key, cursor.value);
+      imagesData.push({
+        key: cursor.key,
+        value: cursor.value
+      });
+      cursor.continue();
+    } else {
+      // Plus de curseur -> afficher tout d'un coup
+      console.log("Total images trouvées:", imagesData.length);
+      displayGallery(imagesData);
+    }
+  };
+
+  store.openCursor().onerror = (err) => {
+    console.error("Erreur curseur:", err);
+    gallery.innerHTML = '<div style="color:red;">❌ Erreur lors de la lecture des images.</div>';
+  };
+}
+
+// Affichage propre de la galerie à partir du tableau collecté
+function displayGallery(imagesArray) {
+  const gallery = document.getElementById("gallery");
+  
+  if (!imagesArray.length) {
+    gallery.innerHTML = '<div style="width:100%; padding:30px; text-align:center; background:#f1f7fc; border-radius:40px; color:#3d6192;">📭 Aucune image sauvegardée pour le moment.</div>';
+    return;
+  }
+
+  let html = '';
+  imagesArray.forEach(item => {
+    const fileId = extractDriveId(item.value.url) || 'ID_non_trouvé';
+    const imageKey = item.key;
+    const imageName = item.value.name || 'image';
+    
+    // Construire l'URL de la miniature
+    let thumbnailUrl;
+    if (fileId !== 'ID_non_trouvé') {
+      thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=s220`;
+    } else {
+      thumbnailUrl = 'https://via.placeholder.com/120x120?text=ID+non+trouvé';
+    }
+
+    html += `<div class="image-card" data-key="${imageKey}" data-fileid="${fileId}">
+      <img src="${thumbnailUrl}" alt="${imageName}" loading="lazy" 
+           onerror="this.src='https://via.placeholder.com/120x120?text=erreur+chargement'">
+      <div class="file-id" title="ID Google Drive">${fileId}</div>
+      <div class="file-id" style="background:#e8f4ff; font-size:10px;" title="URL stockée">${item.value.url.substring(0,30)}...</div>
+      <div class="btn-group">
+        <button class="copy-id-btn" data-id="${fileId}">📋 Copier ID</button>
+        <button class="delete-btn" data-key="${imageKey}">🗑️ Supprimer</button>
+      </div>
+    </div>`;
+  });
+
+  gallery.innerHTML = html;
+
+  // Attacher les événements
+  document.querySelectorAll('.copy-id-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      if (id && id !== 'ID_non_trouvé') {
+        navigator.clipboard.writeText(id).then(() => {
+          const originalText = btn.textContent;
+          btn.textContent = '✅ Copié !';
+          setTimeout(() => btn.textContent = originalText, 1200);
+        }).catch(() => alert('Impossible de copier'));
+      } else {
+        alert('ID invalide');
+      }
+    });
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = Number(btn.getAttribute('data-key'));
+      if (confirm('Supprimer définitivement cette image de la galerie ?')) {
+        if (!db) return alert('DB pas prête');
+        const deleteTx = db.transaction("images", "readwrite");
+        const deleteStore = deleteTx.objectStore("images");
+        deleteStore.delete(key);
+        deleteTx.oncomplete = () => {
+          loadImages();
+        };
+        deleteTx.onerror = () => alert('Erreur lors de la suppression');
+      }
+    });
+  });
+}
+
+// Fonction d'upload avec gestion du loader
+function upload() {
+  const fileInput = document.getElementById("file");
+  const file = fileInput.files[0];
+  if (!file) return alert("Veuillez sélectionner une image");
+
+  const loader = document.getElementById("loader");
+  loader.style.display = "inline-block";
+
+  const reader = new FileReader();
+  reader.onload = function () {
+    const base64 = reader.result.split(",")[1];
+
+    const formData = new FormData();
+    formData.append("file", base64);
+    formData.append("name", file.name);
+    formData.append("type", file.type);
+
+    console.log("Envoi vers le script Google...");
+
+    fetch("https://script.google.com/macros/s/AKfycbxHjVBNTOlj6xBUp_fl-aVbPSFZRiMQB77_YIvFeB79uq2Hx9P_r7HADZTYj9WElsXkug/exec", {
+      method: "POST",
+      body: formData
+    })
+    .then(r => {
+      console.log("Réponse reçue, status:", r.status);
+      return r.json();
+    })
+    .then(res => {
+      loader.style.display = "none";
+      console.log("Réponse du script:", res);
+      
+      if (res.success) {
+        // Vérifier que l'URL est bien présente
+        if (!res.url) {
+          alert("⚠️ Succès mais pas d'URL retournée!");
+          return;
+        }
+        
+        const data = {
+          name: file.name,
+          url: res.url,
+          date: new Date().toISOString(),
+          fullResponse: JSON.stringify(res) // Pour debug
+        };
+
+        console.log("Données à sauvegarder:", data);
+
+        // Sauvegarde dans IndexedDB
+        const tx = db.transaction("images", "readwrite");
+        const store = tx.objectStore("images");
+        const addRequest = store.add(data);
+        
+        addRequest.onsuccess = () => {
+          console.log("Image sauvegardée en base avec succès");
+          loadImages(); // Recharger la galerie
+          fileInput.value = ''; // Vider le champ
+          alert("✅ Image uploadée et sauvegardée localement");
+        };
+        
+        addRequest.onerror = (err) => {
+          console.error("Erreur sauvegarde IndexedDB:", err);
+          alert("Erreur sauvegarde locale : " + err);
+        };
+      } else {
+        alert("❌ Erreur du script : " + (res.error || 'inconnue'));
+      }
+    })
+    .catch(err => {
+      loader.style.display = "none";
+      console.error("Erreur réseau:", err);
+      alert("Erreur réseau / proxy : " + err.message);
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+// Fonction de debug pour voir le contenu de la base
+function debugDatabase() {
+  if (!db) {
+    alert("DB pas prête");
+    return;
+  }
+  
+  const tx = db.transaction("images", "readonly");
+  const store = tx.objectStore("images");
+  const request = store.getAll();
+  
+  request.onsuccess = () => {
+    const data = request.result;
+    const debugDiv = document.getElementById("debug-info");
+    debugDiv.style.display = "block";
+    debugDiv.innerHTML = "<strong>Contenu de IndexedDB:</strong>\n" + 
+                         JSON.stringify(data, null, 2) + 
+                         "\n\n<strong>Nombre d'entrées:</strong> " + data.length;
+    console.log("Debug - contenu DB:", data);
+  };
+  
+  request.onerror = (err) => {
+    alert("Erreur lecture DB: " + err);
+  };
+}
+
+// Rafraîchir quand on revient sur l'onglet
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && db) {
+    loadImages();
+  }
+});
+
+window.addEventListener('load', () => {
+  if (db) loadImages();
+});
+</script>
+
+<!-- petite note -->
+<div style="margin-top: 30px; font-size: 13px; color: #4477aa; text-align: center; border-top: 1px dashed #a0c0e0; padding-top: 15px;">
+  ⚡ Version avec débogage. Si les images ne s'affichent pas, cliquez sur "Debug DB" pour voir le contenu.
+</div>
+
+</body>
+</html>

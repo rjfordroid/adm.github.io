@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin WhatsApp RJ4DROID</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f7f7; }
+    h1, h2 { text-align: center; color: #333; }
+
+    /* Fòm lan */
+    form { 
+      max-width: 600px; 
+      margin: 0 auto 30px; 
+      padding: 20px; 
+      background: #fff; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    form label { display: block; margin-bottom: 10px; font-weight: bold; }
+    form input, form textarea, form select { 
+      width: 100%; 
+      padding: 8px; 
+      margin-top: 5px; 
+      border: 1px solid #ccc; 
+      border-radius: 5px; 
+      box-sizing: border-box;
+    }
+    form textarea{
+      height: 200px;
+    }
+    form button { 
+      padding: 10px 20px; 
+      background: #25D366; 
+      color: #fff; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      font-weight: bold;
+    }
+    form button:hover { background: #128C7E; }
+
+    /* Cards */
+    #cardsContainer { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 20px; 
+      justify-content: center;
+    }
+    .card { 
+      background: #fff; 
+      padding: 15px; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+      width: 100%; 
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .card h3 { margin-top: 0; color: #333; }
+    .card p { color: #555; font-size: 14px; }
+    .card a { display: inline-block; margin: 10px 0; color: #25D366; text-decoration: none; font-weight: bold; }
+    .card a:hover { text-decoration: underline; }
+
+    .card button { 
+      padding: 5px 10px; 
+      margin-right: 5px; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer;
+    }
+    .editBtn { background: #FFA500; color: #fff; }
+    .deleteBtn { background: #FF4C4C; color: #fff; }
+    .publishBtn { background: #25D366; color: #fff; }
+
+    .status { text-align: center; margin-bottom: 20px; font-weight: bold; }
+
+    /* Upload */
+    .toolbar { max-width: 600px; margin: 0 auto 20px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    #preview { max-width: 30px; max-height: 30px; margin: 10px 0; overflow: hidden; }
+    #preview img { width: 100%; }
+    #loader { display: none; color: blue; }
+    .file-input { display: none; }
+    .file-label {
+        display: block;
+        padding: 5px;
+        background: #f0f0f0;
+        border: 2px dashed #999;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 12px;
+        height: 30px;
+        width: 30px;
+    }
+    .file-label:hover {
+        background: #e0e0e0;
+        border-color: #667eea;
+    }
+    .file-label i { font-size: 16px; display: block; margin-bottom: 10px; }
+    .flexImage{
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Chaîne WhatsApp RJ4DROID</h1>
+
+  <!-- Zone d'upload d'image (indépendante) -->
+  <div class="toolbar">
+    <div class="flexImage">
+      <input type="file" id="file" class="file-input" accept="image/*,.pdf" onchange="preview(this)">
+      <label for="file" class="file-label"><i>🖼️</i></label>
+      <button onclick="upload()">⬆️ Envoyer</button>
+      <div id="loader">⏳ Upload en cours...</div>
+      <div id="preview"></div>
+    </div>
+  </div>
+
+  <!-- Formulaire principal avec champ type ajouté -->
+  <form id="whatsappForm">
+    <input type="hidden" id="editKey" value="">
+
+    <label>Titre : <input type="text" id="title" required></label>
+
+    <label>Image (ID Drive) : <input type="text" id="fileId" readonly placeholder="ID après upload"></label>
+
+    <label>Type :
+      <select id="type" required>
+        <option value="">Sélectionnez un type</option>
+        <option value="Html">Html</option>
+        <option value="Css">Css</option>
+        <option value="Astuces">Astuces</option>
+        <option value="Gmail">Gmail</option>
+        <option value="Drive">Drive</option>
+        <option value="Blogger">Blogger</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </label>
+
+    <label>Description : <textarea id="desc" required></textarea></label>
+
+    <label>URL WhatsApp : <input type="url" id="url" required></label>
+
+    <label>En ligne ?
+      <select id="online">
+        <option value="true">Oui</option>
+        <option value="false">Non</option>
+      </select>
+    </label>
+
+    <br>
+    <button type="submit">Envoyer dans Firebase</button>
+  </form>
+
+  <p id="status" class="status"></p>
+
+  <h2>Liste des entrées</h2>
+  <div id="cardsContainer"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQeHWr_vUiQmVVgJJ_cOF9qrCCLd7IJNc",
+      authDomain: "ayiweb.firebaseapp.com",
+      databaseURL: "https://ayiweb-default-rtdb.firebaseio.com",
+      projectId: "ayiweb",
+      storageBucket: "ayiweb.appspot.com",
+      messagingSenderId: "115054504556",
+      appId: "1:115054504556:web:ccd713ba01dd8f02830649"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const form = document.getElementById('whatsappForm');
+    const status = document.getElementById('status');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const editKeyInput = document.getElementById('editKey');
+
+    // ENVOI / EDIT
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      const url = document.getElementById('url').value.trim();
+      const type = document.getElementById('type').value;         // ← nouveau champ
+      const online = document.getElementById('online').value === "true";
+      const fileId = document.getElementById('fileId').value.trim();
+      const date = new Date().toISOString();
+
+      if (!title || !desc || !url || !type) { 
+        status.innerText = "Tous les champs sont obligatoires (titre, type, description, url) !"; 
+        return; 
+      }
+
+      const key = editKeyInput.value;
+      const ref = key ? db.ref('RJFORDROID/WHATSAPP_CHAINE/' + key) : db.ref('RJFORDROID/WHATSAPP_CHAINE').push();
+
+      // On inclut maintenant 'type' et 'fileId' dans l'objet
+      ref.set({ title, desc, url, type, online, fileId, date })
+        .then(() => {
+          status.innerText = key ? "✅ Données mises à jour !" : "✅ Données envoyées !";
+          form.reset();
+          editKeyInput.value = "";
+          document.getElementById('type').value = ""; // reset manuel du select
+        })
+        .catch(err => {
+          console.error(err);
+          status.innerText = "❌ Erreur lors de l'envoi.";
+        });
+    });
+
+    // AFFICHAGE CARDS
+    const ref = db.ref('RJFORDROID/WHATSAPP_CHAINE');
+    ref.on('value', snapshot => {
+      cardsContainer.innerHTML = '';
+      snapshot.forEach(child => {
+        const data = child.val();
+        const key = child.key;
+
+        const card = document.createElement('div');
+        card.classList.add('card');
+
+        // Boutons d'action
+        const editBtn = document.createElement('button');
+        editBtn.textContent = "Éditer";
+        editBtn.classList.add('editBtn');
+        editBtn.addEventListener('click', () => {
+          document.getElementById('title').value = data.title || '';
+          document.getElementById('desc').value = data.desc || '';
+          document.getElementById('url').value = data.url || '';
+          document.getElementById('type').value = data.type || '';   // ← préremplir le type
+          document.getElementById('online').value = data.online ? 'true' : 'false';
+          document.getElementById('fileId').value = data.fileId || '';
+          editKeyInput.value = key;
+          status.innerText = "Édition en cours...";
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "Supprimer";
+        deleteBtn.classList.add('deleteBtn');
+        deleteBtn.addEventListener('click', () => {
+          if(confirm("Voulez-vous vraiment supprimer cette entrée ?")) {
+            db.ref('RJFORDROID/WHATSAPP_CHAINE/' + key).remove();
+          }
+        });
+
+        const publishBtn = document.createElement('button');
+        publishBtn.textContent = "Publier";
+        publishBtn.classList.add('publishBtn');
+        publishBtn.addEventListener('click', () => {
+          db.ref('RJFORDROID/WHATSAPP_CHAINE/' + key).update({ online: true });
+          status.innerText = "✅ Entrée publiée !";
+        });
+
+        // Construction du contenu de la carte (avec type et image si disponible)
+        let imageHtml = '';
+        if (data.fileId) {
+          imageHtml = `<img src="https://drive.google.com/thumbnail?id=${data.fileId}" style="max-width:100%; height:auto; border-radius:5px;" alt="image">`;
+        }
+
+        card.innerHTML = `
+          <h3>${data.title}</h3>
+          <p><strong>Type :</strong> ${data.type || 'Non défini'}</p>
+          ${imageHtml}
+          <p>${data.desc}</p>
+          <a href="${data.url}" target="_blank">Lien WhatsApp</a>
+          <p>En ligne : <strong>${data.online ? 'Oui' : 'Non'}</strong></p>
+          <p>Date : ${data.date ? new Date(data.date).toLocaleString() : ''}</p>
+        `;
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(deleteBtn);
+        actionsDiv.appendChild(publishBtn);
+
+        card.appendChild(actionsDiv);
+        cardsContainer.appendChild(card);
+      });
+    });
+
+    // Fonctions pour l'upload (inchangées)
+    function preview(input) {
+      const preview = document.getElementById('preview');
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" style="max-width:200px">`;
+        reader.readAsDataURL(input.files[0]);
+        document.querySelector('.file-label').innerHTML = `<i>✅</i> ${input.files[0].name}`;
+      }
+    }
+
+    function upload() {
+      const fileInput = document.getElementById("file");
+      const file = fileInput.files[0];
+      if (!file) return alert("Choisissez un fichier");
+
+      document.getElementById("loader").style.display = "block";
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const formData = new FormData();
+        formData.append("file", reader.result.split(",")[1]);
+        formData.append("name", file.name);
+        formData.append("type", file.type);
+
+        fetch("https://script.google.com/macros/s/AKfycbxHjVBNTOlj6xBUp_fl-aVbPSFZRiMQB77_YIvFeB79uq2Hx9P_r7HADZTYj9WElsXkug/exec", {
+          method: "POST",
+          body: formData
+        })
+        .then(r => r.json())
+        .then(res => {
+          document.getElementById("loader").style.display = "none";
+          if (!res.success) return alert("Erreur : " + res.error);
+          const id = res.url.match(/\/d\/([^\/]+)/)?.[1] || "";
+          document.getElementById("fileId").value = id;
+          alert("✅ Upload réussi !");
+        })
+        .catch(err => {
+          document.getElementById("loader").style.display = "none";
+          alert("Erreur : " + err);
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>

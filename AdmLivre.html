@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin RJ4DROID - Gestion dokiman</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: #0f172a;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 15px;
+        }
+        
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1100px;
+        }
+        
+        th {
+            background: #f8fafc;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 16px 12px;
+            text-align: left;
+            border-bottom: 2px solid #2563eb;
+        }
+        
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        
+        tr:hover {
+            background: #f1f5f9;
+        }
+        
+        .badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .badge.prix {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.online {
+            background: #22c55e;
+            color: white;
+        }
+
+        .badge.offline {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+        
+        .btn-icon:hover {
+            background: #e2e8f0;
+        }
+        
+        .btn-icon.edit:hover {
+            color: #2563eb;
+            background: #dbeafe;
+        }
+        
+        .btn-icon.delete:hover {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+        
+        .btn-icon.preview:hover {
+            color: #7c3aed;
+            background: #ede9fe;
+        }
+
+        .btn-icon.toggle:hover {
+            color: #22c55e;
+            background: #dcfce7;
+        }
+
+        .btn-icon.toggle.off:hover {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        .btn-add {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(37,99,235,0.3);
+        }
+        
+        .btn-refresh {
+            background: #f1f5f9;
+            color: #334155;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .btn-refresh:hover {
+            background: #e2e8f0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+            display: block;
+        }
+        
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+            display: block;
+        }
+        
+        .info-box {
+            background: #e0f2fe;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-box i {
+            color: #2563eb;
+            font-size: 20px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #94a3b8;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .modal label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .modal label i {
+            color: #2563eb;
+            margin-right: 5px;
+        }
+        
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .modal input:focus, .modal select:focus, .modal textarea:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        
+        .preview-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+        
+        .preview-img:hover {
+            transform: scale(1.1);
+            border-color: #2563eb;
+        }
+        
+        .preview-img.large {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+        }
+        
+        .firebase-status {
+            margin-top: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .toolbar h2 {
+            color: #1e293b;
+            font-size: 20px;
+        }
+        
+        .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .file-upload-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .inline-loader {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #2563eb;
+        }
+        
+        .small-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .preview-mini {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .preview-mini.show {
+            display: block;
+        }
+        
+        .preview-mini img {
+            max-width: 100%;
+            max-height: 100px;
+            border-radius: 8px;
+        }
+
+        /* Style pou toggle online/offline */
+        .toggle-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .status-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .status-label input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-database" style="font-size: 40px; margin-bottom: 10px;"></i>
+            <h1>RJ4DROID ADMIN</h1>
+            <p>Gestion bibliothèque PDF</p>
+        </div>
+        
+        <div class="card">
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>RJFORDROID/PDF/</strong> — Done yo ap charge depi Firebase Realtime Database
+                </div>
+            </div>
+            
+            <div id="messageBox" class="message"></div>
+            
+            <div class="toolbar">
+                <h2><i class="fas fa-list"></i> Lis dokiman</h2>
+                <div class="toolbar-buttons">
+                    <button class="btn-add" onclick="showAddModal()">
+                        <i class="fas fa-plus-circle"></i> Ajoute dokiman
+                    </button>
+                    <button class="btn-refresh" onclick="loadData()">
+                        <i class="fas fa-sync-alt"></i> Rafrechi
+                    </button>
+                </div>
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Ap charge done yo...</p>
+            </div>
+            
+            <div id="tableContainer" class="table-container" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aperçu</th>
+                            <th>Titre</th>
+                            <th>Type</th>
+                            <th>Prix</th>
+                            <th>Dat</th>
+                            <th>Status</th>
+                            <th>Imaj</th>
+                            <th>PDF</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-folder-open"></i>
+                <h3>Pa gen dokiman nan Firebase</h3>
+                <p>Klike sou "Ajoute dokiman" pou kòmanse.</p>
+            </div>
+            
+            <div class="firebase-status">
+                <i class="fas fa-database"></i> 
+                <span id="firebaseStatus">Ap tcheke Firebase...</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pou ajoute dokiman -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-plus-circle" style="color:#2563eb;"></i> Ajoute nouvo dokiman</h3>
+            <form id="addForm">
+                <div class="row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex:1;">
+                        <label><i class="fas fa-tag"></i> Type *</label>
+                        <select id="addType" required>
+                            <option value="">Chwazi type</option>
+                            <option value="Formation">Formation</option>
+                            <option value="Tutoriel">Tutoriel</option>
+                            <option value="Cours">Cours</option>
+                            <option value="Document">Document</option>
+                            <option value="Livre">Livre</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label><i class="fas fa-calendar"></i> Dat</label>
+                        <input type="date" id="addDate">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label><i class="fas fa-coins"></i> Pri</label>
+                        <input type="text" id="addPrix" placeholder="Gratuit, 2500 HTG...">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-heading"></i> Titre *</label>
+                    <input type="text" id="addTitre" placeholder="Ex: Kou Android pou débutan" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Deskripsyon</label>
+                    <textarea id="addDesc" rows="3" placeholder="Eksplike sa dokiman an ye..."></textarea>
+                </div>
+                
+                <!-- Toggle online/offline -->
+                <div class="toggle-status">
+                    <label class="status-label">
+                        <input type="checkbox" id="addOnline" checked>
+                        <i class="fas fa-globe" style="color:#22c55e;"></i> Dokiman an online
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-cloud-upload-alt"></i> Chwazi yon imaj (opsyonnel)</label>
+                    <div class="file-upload-group">
+                        <input type="file" id="addFile" accept="image/*" style="flex:1;">
+                        <span id="addLoader" class="inline-loader" style="display: none;">
+                            <div class="small-spinner"></div>
+                            <span>Upload...</span>
+                        </span>
+                    </div>
+                    <small style="color:#64748b;">Si ou chwazi yon imaj, ID Drive ap ranje otomatikman.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Imaj * (ID Drive oswa URL konplè)</label>
+                    <input type="text" id="addImage" placeholder="Eg: 1ABCxyz oswa https://..." required>
+                </div>
+                
+                <div id="addPreview" class="preview-mini">
+                    <small>Aperçu:</small>
+                    <img id="addPreviewImg" src="" alt="Preview">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-file-pdf"></i> Lien/Id PDF *</label>
+                    <input type="text" id="addUrl" placeholder="ID Drive oswa HTTPS" required>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Anile</button>
+                    <button type="submit" class="btn btn-primary">Ajoute dokiman</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal pou modifye dokiman -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-edit" style="color:#2563eb;"></i> Modifye dokiman</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                
+                <div class="row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex:1;">
+                        <label><i class="fas fa-tag"></i> Type *</label>
+                        <select id="editType" required>
+                            <option value="Formation">Formation</option>
+                            <option value="Tutoriel">Tutoriel</option>
+                            <option value="Cours">Cours</option>
+                            <option value="Document">Document</option>
+                            <option value="Livre">Livre</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label><i class="fas fa-calendar"></i> Dat</label>
+                        <input type="date" id="editDate">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label><i class="fas fa-coins"></i> Pri</label>
+                        <input type="text" id="editPrix" placeholder="Gratuit, 2500 HTG...">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-heading"></i> Titre *</label>
+                    <input type="text" id="editTitre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Deskripsyon</label>
+                    <textarea id="editDesc" rows="3"></textarea>
+                </div>
+                
+                <!-- Toggle online/offline -->
+                <div class="toggle-status">
+                    <label class="status-label">
+                        <input type="checkbox" id="editOnline">
+                        <i class="fas fa-globe" style="color:#22c55e;"></i> Dokiman an online
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Imaj * (ID Drive oswa URL konplè)</label>
+                    <input type="text" id="editImage" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-file-pdf"></i> Lien/Id PDF *</label>
+                    <input type="text" id="editUrl" required>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Anile</button>
+                    <button type="submit" class="btn btn-primary">Sove chanjman</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal pou wè imaj an gwo -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <h3>Preview Imaj</h3>
+            <img id="previewLargeImg" class="preview-img large" src="" alt="Preview">
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closePreviewModal()">Fèmen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
+    <script>
+        // Konfigirasyon Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAQeHWr_vUiQmVVgJJ_cOF9qrCCLd7IJNc",
+            authDomain: "ayiweb.firebaseapp.com",
+            databaseURL: "https://ayiweb-default-rtdb.firebaseio.com",
+            projectId: "ayiweb",
+            storageBucket: "ayiweb.appspot.com",
+            messagingSenderId: "115054504556",
+            appId: "1:115054504556:web:ccd713ba01dd8f02830649"
+        };
+        
+        // Inisyalize Firebase
+        let database;
+        let pdfRef;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            pdfRef = database.ref('RJFORDROID/PDF');
+            document.getElementById('firebaseStatus').innerHTML = '<span style="color:#22c55e;">✓ Firebase konekte</span>';
+        } catch (e) {
+            document.getElementById('firebaseStatus').innerHTML = '<span style="color:#ef4444;">✗ Erè Firebase</span>';
+            console.error('Firebase error:', e);
+        }
+        
+        // Variable global pou done yo
+        let documentsData = [];
+        
+        // Chaje done lè paj la charge
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            
+            // Met dat jodi a nan modal add
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('addDate').value = today;
+        });
+        
+        // Fonksyon pou chaje done
+        function loadData() {
+            if (!pdfRef) {
+                showMessage('Pa konekte ak Firebase', 'error');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            
+            pdfRef.once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    documentsData = [];
+                    
+                    if (data) {
+                        // Konvèti object Firebase an array
+                        Object.keys(data).forEach(key => {
+                            documentsData.push({
+                                id: key,
+                                ...data[key]
+                            });
+                        });
+                        
+                        // Triage pa dat (pi resan an premye)
+                        documentsData.sort((a, b) => {
+                            if (a.Date && b.Date) {
+                                return b.Date.localeCompare(a.Date);
+                            }
+                            return 0;
+                        });
+                        
+                        displayTable(documentsData);
+                    } else {
+                        // Pa gen done
+                        document.getElementById('tableContainer').style.display = 'none';
+                        document.getElementById('emptyState').style.display = 'block';
+                    }
+                    
+                    document.getElementById('loading').style.display = 'none';
+                })
+                .catch((error) => {
+                    console.error('Erè loading:', error);
+                    showMessage('Erè loading: ' + error.message, 'error');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('emptyState').style.display = 'block';
+                });
+        }
+        
+        // Fonksyon pou montre tab la
+        function displayTable(documents) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            documents.forEach(doc => {
+                const row = document.createElement('tr');
+                
+                // Aperçu imaj - CORRIGÉ: pa gen timestamp pou evite reload
+                const imgUrl = getImageUrl(doc.image, false);
+                const previewCell = document.createElement('td');
+                const img = document.createElement('img');
+                img.className = 'preview-img';
+                img.src = imgUrl;
+                img.alt = 'preview';
+                
+                // Gestion erè imaj
+                img.onerror = function() {
+                    console.log('Imaj pa charge:', imgUrl);
+                    this.src = 'https://via.placeholder.com/60/2563eb/white?text=IMG';
+                    this.onerror = null; // Evite bouk
+                };
+                
+                img.onclick = function() {
+                    showLargePreview(getImageUrl(doc.image, true));
+                };
+                previewCell.appendChild(img);
+                
+                // Titre
+                const titreCell = document.createElement('td');
+                titreCell.innerHTML = `<strong>${escapeHtml(doc.Titre || 'Sans titre')}</strong><br><small style="color:#64748b;">${escapeHtml((doc.desc || '').substring(0, 30))}${(doc.desc || '').length > 30 ? '...' : ''}</small>`;
+                
+                // Type
+                const typeCell = document.createElement('td');
+                typeCell.innerHTML = `<span class="badge">${escapeHtml(doc.type || 'Autre')}</span>`;
+                
+                // Prix
+                const prixCell = document.createElement('td');
+                prixCell.innerHTML = `<span class="badge prix">${escapeHtml(doc.prix || 'Gratuit')}</span>`;
+                
+                // Dat
+                const dateCell = document.createElement('td');
+                dateCell.textContent = doc.Date || 'N/A';
+                
+                // Status (online/offline)
+                const statusCell = document.createElement('td');
+                const isOnline = doc.online !== false;
+                statusCell.innerHTML = `<span class="badge ${isOnline ? 'online' : 'offline'}">${isOnline ? 'Online' : 'Offline'}</span>`;
+                
+                // Imaj ID/URL - montre tout vale a
+                const imageCell = document.createElement('td');
+                const imageValue = doc.image || '';
+                imageCell.innerHTML = `<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; font-size:11px; word-break:break-all;">${escapeHtml(imageValue.substring(0, 25))}${imageValue.length > 25 ? '...' : ''}</code>`;
+                
+                // PDF ID/URL
+                const urlCell = document.createElement('td');
+                const urlValue = doc.Url || '';
+                urlCell.innerHTML = `<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; font-size:11px; word-break:break-all;">${escapeHtml(urlValue.substring(0, 25))}${urlValue.length > 25 ? '...' : ''}</code>`;
+                
+                // Actions
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'actions';
+                actionsCell.innerHTML = `
+                    <button class="btn-icon preview" onclick="window.open('${getPdfUrl(doc.Url)}', '_blank')" title="Wè PDF"><i class="fas fa-file-pdf"></i></button>
+                    <button class="btn-icon edit" onclick="editDocument('${doc.id}')" title="Modifye"><i class="fas fa-edit"></i></button>
+                    <button class="btn-icon ${isOnline ? 'toggle' : 'toggle off'}" onclick="toggleOnline('${doc.id}')" title="${isOnline ? 'Mete offline' : 'Mete online'}">
+                        <i class="fas ${isOnline ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                    </button>
+                    <button class="btn-icon delete" onclick="deleteDocument('${doc.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                `;
+                
+                row.appendChild(previewCell);
+                row.appendChild(titreCell);
+                row.appendChild(typeCell);
+                row.appendChild(prixCell);
+                row.appendChild(dateCell);
+                row.appendChild(statusCell);
+                row.appendChild(imageCell);
+                row.appendChild(urlCell);
+                row.appendChild(actionsCell);
+                
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('tableContainer').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+        
+        // Fonksyon pou jwenn URL imaj - VERSION FINALE SANS TIMESTAMP POU EVITE RELOAD
+        function getImageUrl(imageInput, large = false) {
+            if (!imageInput) return 'https://via.placeholder.com/100/64748b/white?text=No+Image';
+            
+            // Si se yon URL konplè (http:// ou https://)
+            if (imageInput.startsWith('http://') || imageInput.startsWith('https://')) {
+                return imageInput;
+            }
+            
+            // Netwaye ID Drive (retire slash, query params, etc)
+            let cleanId = imageInput.replace(/[\/\?\&\=]/g, '');
+            
+            // Si se yon ID Drive (grat longè 28-33 karaktè tipikman)
+            if (cleanId.length > 10) {
+                if (large) {
+                    // URL pou gwo imaj
+                    return `https://drive.google.com/uc?export=view&id=${cleanId}`;
+                } else {
+                    // URL thumbnail ki pi estab, SANS TIMESTAMP pou evite reload
+                    return `https://drive.google.com/thumbnail?id=${cleanId}&sz=w200`;
+                }
+            }
+            
+            // Si pa ni URL ni ID Drive valid
+            return 'https://via.placeholder.com/100/ef4444/white?text=Invalid+ID';
+        }
+        
+        // Fonksyon pou jwenn URL PDF
+        function getPdfUrl(urlId) {
+            if (!urlId) return '#';
+            if (urlId.startsWith('http')) return urlId;
+            return `https://drive.google.com/file/d/${urlId}/view`;
+        }
+        
+        // Fonksyon pou toggle online/offline
+        window.toggleOnline = function(id) {
+            const doc = documentsData.find(d => d.id === id);
+            if (!doc) return;
+            
+            const newStatus = doc.online === false ? true : false;
+            
+            pdfRef.child(id).update({ online: newStatus })
+                .then(() => {
+                    showMessage(`Dokiman mete ${newStatus ? 'online' : 'offline'}`, 'success');
+                    loadData();
+                })
+                .catch(error => {
+                    showMessage('Erè: ' + error.message, 'error');
+                });
+        };
+        
+        // ---------- FONKSYON UPLOAD IMAGE POU MODAL AJOUTE ----------
+        document.getElementById('addFile').addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert("Tanpri chwazi yon imaj (JPEG, PNG, etc.)");
+                return;
+            }
+            
+            document.getElementById('addLoader').style.display = 'inline-flex';
+            
+            const reader = new FileReader();
+            reader.onload = function() {
+                const base64Data = reader.result.split(",")[1];
+                
+                const formData = new FormData();
+                formData.append("file", base64Data);
+                formData.append("name", file.name);
+                formData.append("type", file.type);
+                
+                fetch("https://script.google.com/macros/s/AKfycbxHjVBNTOlj6xBUp_fl-aVbPSFZRiMQB77_YIvFeB79uq2Hx9P_r7HADZTYj9WElsXkug/exec", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(res => {
+                    document.getElementById('addLoader').style.display = 'none';
+                    
+                    if (!res.success) {
+                        alert("Erreur: " + (res.error || "Enkoni"));
+                        return;
+                    }
+                    
+                    let id = "";
+                    if (res.url) {
+                        const match = res.url.match(/\/d\/([^\/]+)/);
+                        id = match ? match[1] : "";
+                    }
+                    
+                    if (id) {
+                        document.getElementById('addImage').value = id;
+                        // Montre preview
+                        const previewDiv = document.getElementById('addPreview');
+                        const previewImg = document.getElementById('addPreviewImg');
+                        previewImg.src = getImageUrl(id);
+                        previewDiv.classList.add('show');
+                        alert("✅ Upload reyisi! ID Drive ajoute.");
+                    } else {
+                        alert("Pa kapab jwenn ID Drive nan repons lan");
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('addLoader').style.display = 'none';
+                    console.error("Upload error:", err);
+                    alert("Erreur: " + err.message);
+                });
+            };
+            
+            reader.readAsDataURL(file);
+        });
+        
+        // Preview imaj lè tape nan champ addImage
+        document.getElementById('addImage').addEventListener('input', function(e) {
+            const val = e.target.value.trim();
+            const previewDiv = document.getElementById('addPreview');
+            const previewImg = document.getElementById('addPreviewImg');
+            
+            if (val) {
+                previewImg.src = getImageUrl(val);
+                previewDiv.classList.add('show');
+            } else {
+                previewDiv.classList.remove('show');
+            }
+        });
+        
+        // ---------- MODAL AJOUTE ----------
+        window.showAddModal = function() {
+            // Remete fòm nan
+            document.getElementById('addForm').reset();
+            document.getElementById('addPreview').classList.remove('show');
+            document.getElementById('addOnline').checked = true;
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('addDate').value = today;
+            document.getElementById('addModal').classList.add('show');
+        };
+        
+        window.closeAddModal = function() {
+            document.getElementById('addModal').classList.remove('show');
+        };
+        
+        // Soumèt fòm ajoute
+        document.getElementById('addForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const titre = document.getElementById('addTitre').value.trim();
+            const type = document.getElementById('addType').value;
+            const image = document.getElementById('addImage').value.trim();
+            const url = document.getElementById('addUrl').value.trim();
+            const online = document.getElementById('addOnline').checked;
+            
+            if (!titre || !type || !image || !url) {
+                alert('Tanpri ranpli tout champ obligatwa (*)');
+                return;
+            }
+            
+            const documentData = {
+                Titre: titre,
+                desc: document.getElementById('addDesc').value.trim(),
+                type: type,
+                prix: document.getElementById('addPrix').value.trim() || 'Gratuit',
+                image: image,
+                Url: url,
+                Date: document.getElementById('addDate').value,
+                online: online
+            };
+            
+            pdfRef.push(documentData)
+                .then(() => {
+                    showMessage('Dokiman ajoute ak siksè!', 'success');
+                    closeAddModal();
+                    loadData();
+                })
+                .catch(error => {
+                    showMessage('Erè: ' + error.message, 'error');
+                });
+        });
+        
+        // ---------- MODAL MODIFYE ----------
+        window.editDocument = function(id) {
+            const doc = documentsData.find(d => d.id === id);
+            if (!doc) return;
+            
+            document.getElementById('editId').value = doc.id;
+            document.getElementById('editTitre').value = doc.Titre || '';
+            document.getElementById('editDesc').value = doc.desc || '';
+            document.getElementById('editType').value = doc.type || 'Autre';
+            document.getElementById('editPrix').value = doc.prix || '';
+            document.getElementById('editImage').value = doc.image || '';
+            document.getElementById('editUrl').value = doc.Url || '';
+            document.getElementById('editDate').value = doc.Date || new Date().toISOString().split('T')[0];
+            document.getElementById('editOnline').checked = doc.online !== false;
+            
+            document.getElementById('editModal').classList.add('show');
+        };
+        
+        window.closeEditModal = function() {
+            document.getElementById('editModal').classList.remove('show');
+        };
+        
+        // Sove modifikasyon
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('editId').value;
+            const updatedData = {
+                Titre: document.getElementById('editTitre').value.trim(),
+                desc: document.getElementById('editDesc').value.trim(),
+                type: document.getElementById('editType').value,
+                prix: document.getElementById('editPrix').value.trim() || 'Gratuit',
+                image: document.getElementById('editImage').value.trim(),
+                Url: document.getElementById('editUrl').value.trim(),
+                Date: document.getElementById('editDate').value,
+                online: document.getElementById('editOnline').checked
+            };
+            
+            pdfRef.child(id).update(updatedData)
+                .then(() => {
+                    showMessage('Dokiman modifye ak siksè!', 'success');
+                    closeEditModal();
+                    loadData();
+                })
+                .catch(error => {
+                    showMessage('Erè: ' + error.message, 'error');
+                });
+        });
+        
+        // ---------- FONKSYON POU EFASE ----------
+        window.deleteDocument = function(id) {
+            if (confirm('Èske ou sèten ou vle efase dokiman sa a?')) {
+                pdfRef.child(id).remove()
+                    .then(() => {
+                        showMessage('Dokiman efase ak siksè!', 'success');
+                        loadData();
+                    })
+                    .catch(error => {
+                        showMessage('Erè: ' + error.message, 'error');
+                    });
+            }
+        };
+        
+        // ---------- PREVIEW MODAL ----------
+        window.showLargePreview = function(url) {
+            document.getElementById('previewLargeImg').src = url;
+            document.getElementById('previewModal').classList.add('show');
+        };
+        
+        window.closePreviewModal = function() {
+            document.getElementById('previewModal').classList.remove('show');
+        };
+        
+        // ---------- UTILITAIRES ----------
+        function showMessage(msg, type) {
+            const box = document.getElementById('messageBox');
+            box.className = 'message ' + type;
+            box.innerHTML = msg;
+            
+            setTimeout(() => {
+                box.className = 'message';
+                box.innerHTML = '';
+            }, 4000);
+        }
+        
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Mete fonksyon yo nan global scope
+        window.loadData = loadData;
+    </script>
+</body>
+</html>

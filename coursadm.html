@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TipTap styles -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tiptap/core@2.7.2/dist/tiptap.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@2.7.2/dist/starter-kit.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tiptap/extension-typography@2.7.2/dist/typography.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* 1. Estil Jeneral & Reset */
+    body {
+        background-color: #f4f7f6;
+        color: #333;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .admin-container {
+        width: 100%;
+        margin: 0 auto;
+        background: #fff;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    /* 2. Tabs nan Bottom (Fixed) */
+    .tab-buttons { 
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        display: flex; 
+        background: #fff;
+        border-top: 1px solid #ddd;
+        z-index: 2000;
+    }
+    
+    .tab-buttons button { 
+        flex: 1;
+        padding: 15px; 
+        cursor: pointer; 
+        background: #fff; 
+        border: none; 
+        font-weight: 600;
+        color: #64748b;
+        transition: 0.3s;
+    }
+    
+    .tab-buttons button.active { 
+        color: #2563eb; 
+        border-top: 3px solid #2563eb;
+        background: #f8fafc;
+    }
+
+    /* 3. Form & Layout */
+    form {
+        display: none;
+        flex-direction: column;
+        height: calc(100vh - 60px);
+        padding: 2px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    #courseForm, #lessonForm, #listSection { 
+        display: none; 
+    }
+
+    .active-content { 
+        display: flex !important; 
+        flex-direction: column; 
+    }
+
+    .flex-header {
+      background:gray;
+        display: flex;
+        justify-content:start;
+        align-items:center;
+        gap: 8px;
+        padding: 3px;
+        margin-bottom: 1px;
+    }
+    .flex-header div{
+      width:100%;
+      overflow-x:hidden;
+    }
+    
+    .flex-header select { 
+        width: 60px; 
+        padding: 4px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+    }
+    
+    .flex-header input { 
+        flex: 1; 
+        padding: 6px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+    }
+    
+    .numero-input {
+        width: 30px !important;
+        max-width:30px:
+        text-align: center;
+        background-color: #f8fafc;
+        font-weight: bold;
+    }
+
+    input[type="text"], input[type="number"], textarea {
+        padding: 4px;
+        margin-bottom: 5px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        font-size: 14px;
+        outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    /* 4. Editeur TipTap (Blogger Style) */
+    #lessons-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 250px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+    }
+
+    /* Toolbar TipTap - Rich and Complete */
+    .tiptap-toolbar {
+        background: #f8fafc;
+        border-bottom: 1px solid #cbd5e1;
+        padding: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .tiptap-toolbar button {
+        background: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 1px;
+        padding: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        color: #475569;
+        min-width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tiptap-toolbar button:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+    }
+
+    .tiptap-toolbar button.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+    }
+
+    .tiptap-toolbar select {
+        background: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 6px 8px;
+        font-size: 14px;
+        color: #475569;
+        height: 30px;
+        min-width: 60px;
+    }
+
+    .tiptap-toolbar .divider {
+        width: 1px;
+        height: 24px;
+        background: #cbd5e1;
+        margin: 0 5px;
+    }
+
+    .tiptap-toolbar .toolbar-group {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+    .flex{
+      display:flex;
+      gap:5px;
+        align-items: center;
+      overflow-x:auto;
+    }
+    .flex select{
+      padding:5px;
+      width:60px;
+    }
+    .flex .toolbar-group input[type="color"]{
+      padding:0;
+      max-height:30px;
+      margin:0;
+    }
+    .flex button{
+      padding:5px;
+    }
+
+    /* Zòn edite TipTap */
+    #tiptap-editor {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        font-size: 16px;
+        line-height: normal;
+        outline: none;
+        min-height: 200px;
+        font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #tiptap-editor:focus {
+        outline: none;
+    }
+
+    #tiptap-editor p {
+        margin: 0 0 10px 0;
+    }
+
+    #tiptap-editor h1, 
+    #tiptap-editor h2, 
+    #tiptap-editor h3,
+    #tiptap-editor h4 {
+        margin-top: 2px;
+        margin-bottom: 1px;
+    }
+
+    #tiptap-editor h1 { font-size: 28px; }
+    #tiptap-editor h2 { font-size: 24px; }
+    #tiptap-editor h3 { font-size: 20px; }
+    #tiptap-editor h4 { font-size: 18px; }
+
+    #tiptap-editor ul, 
+    #tiptap-editor ol {
+        padding-left:4px;
+        margin-bottom: 7px;
+    }
+
+    #tiptap-editor a {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+
+    #tiptap-editor blockquote {
+        border-left: 3px solid #cbd5e1;
+        padding-left: 15px;
+        margin-left: 0;
+        color: #64748b;
+        font-style: italic;
+    }
+
+    #tiptap-editor img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 10px 0;
+        border-radius: 5px;
+    }
+
+    #tiptap-editor table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 10px 0;
+    }
+
+    #tiptap-editor table th,
+    #tiptap-editor table td {
+        border: 1px solid #cbd5e1;
+        padding: 8px;
+        text-align: left;
+    }
+
+    #tiptap-editor table th {
+        background: #f8fafc;
+        font-weight: bold;
+    }
+
+    #tiptap-editor pre {
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        margin: 10px 0;
+    }
+
+    #tiptap-editor code {
+        background: #f8fafc;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+    }
+
+    /* Style pour différentes font-sizes */
+    .font-size-small { font-size: 12px; }
+    .font-size-normal { font-size: 16px; }
+    .font-size-large { font-size: 18px; }
+    .font-size-xlarge { font-size: 20px; }
+
+ /* Asire tablo a pran tout lajè a epi li gen bordi */
+#tiptap-editor table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 15px 0 !important;
+    table-layout: auto !important; /* Chanje 'fixed' pou 'auto' si gen tèks long */
+    border: 2px solid black !important;
+}
+
+#tiptap-editor th, 
+#tiptap-editor td {
+    border: 2px solid black !important;
+    padding: 2px !important;
+    min-height: 30px !important;
+    min-width: 50px !important;
+    vertical-align: top !important;
+    word-break: break-word !important;
+}
+
+/* Sa a enpòtan pou w ka wè tablo a menmsi li vid */
+#tiptap-editor td:empty::after {
+    content: "\00a0"; /* Ajoute yon espas envizib */
+}
+
+
+
+    /* 5. Bouton Publier */
+    .btn-publish {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+
+    .btn-publish:hover {
+        background: #0da271;
+    }
+
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    /* 6. Lis Kour ak Leson */
+    #listSection {
+        padding: 5px;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+    }
+
+    .course-item {
+      
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 5px;
+        margin-bottom: 15px;
+        border-left: 4px solid #2563eb;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .course-item li{
+      display:flex;
+      padding:5px;
+      gap:5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* Jesyon Klavye Android */
+    @media screen and (max-height: 500px) {
+        .tab-buttons { display: none; }
+        form { height: 100vh; padding-bottom: 20px; }
+    }
+
+    /* Modal pou imaj */
+    .image-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    .image-modal input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .image-modal-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 15px;
+    }
+    
+    /* Container prensipal la */
+#listSection {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Tit seksyon an */
+#listSection h4 {
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+}
+
+/* Atik Kous (Course Item) */
+.course-item {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.course-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #2c3e50;
+}
+
+/* Lis Leçon yo */
+.lesson-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.lesson-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.3s ease;
+}
+
+.lesson-item:hover {
+    background-color: #fcfcfc;
+}
+
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+/* Enfòmasyon sou Leçon (Nimewo ak Tit) */
+.lesson-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.lesson-num {
+    background-color: #007bff;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.lesson-title {
+    color: #555;
+}
+
+/* Bouton Aksyon (Edit & Delete) */
+.lesson-actions {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: opacity 0.2s;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.btn-edit {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* Mesaj lè li vid */
+.empty-message {
+    color: #888;
+    font-style: italic;
+    padding: 10px;
+    text-align: center;
+}
+
+
+.editor-toolbar {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-bottom: none;
+    padding: 8px;
+    display: flex;
+    gap: 5px;
+    border-radius: 8px 8px 0 0;
+}
+
+.editor-toolbar button {
+    background: white;
+    border: 1px solid #cbd5e1;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.editor-toolbar button:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+#courseDesc {
+    min-height: 200px;
+    height: 400px;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 0 8px 8px;
+    padding: 15px;
+    background: white;
+    overflow-y: auto;
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+
+#courseDesc:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+#courseDesc img {
+    max-width: 100%;
+    border-radius: 8px;
+    display: block;
+    margin: 10px 0;
+}
+
+
+
+</style>
+</head>
+<body>
+<script>
+  // Fonksyon pou fòmate tèks (Gras, Italik, elatriye)
+// Fonksyon pou fòmate tèks la visyèlman
+function execCmd(command, value = null) {
+    document.execCommand(command, false, value);
+}
+
+// Fonksyon pou ensere imaj la pou l parèt touswit
+function insertImages() {
+    const url = prompt("Antre lyen (URL) imaj la:");
+    if (url) {
+        const imgTag = `<img src="${url}">`;
+        document.execCommand('insertHTML', false, imgTag);
+    }
+}
+
+// LÈ W AP SOVE DONE YO (Firebase)
+// Depi se yon DIV, ou pa itilize .value ankò, ou itilize .innerHTML
+document.getElementById('courseForm').onsubmit = function(e) {
+    e.preventDefault();
+    
+    const descriptionKou = document.getElementById('courseDesc').innerHTML;
+    // Koulye a ou ka voye 'descriptionKou' nan Firebase...
+    console.log("Kontni pou Firebase:", descriptionKou);
+};
+
+</script>
+<div class="admin-container">
+
+<form id="courseForm" class="active-content">
+    <h3 style="margin-top:0">Nouveau Cours</h3>
+    <input type="text" id="adfCoursId" placeholder="ID du cours (ex: kreyol-101)">
+    <input type="text" id="courseName" placeholder="Nom complet du cours">
+    
+    <div class="editor-toolbar">
+        <button type="button" onclick="execCmd('bold')" title="Gras"><b>B</b></button>
+        <button type="button" onclick="execCmd('italic')" title="Italique"><i>I</i></button>
+        <button type="button" onclick="insertImages()" title="Insérer Image">🖼️ Image</button>
+        <button type="button" onclick="execCmd('insertHorizontalRule')" title="Ligne">➖</button>
+        <button type="button" onclick="execCmd('formatBlock', 'h2')" title="Titre">H2</button>
+    </div>
+    
+    <div id="courseDesc" contenteditable="true" placeholder="Écrivez ici..."></div>
+
+    <div class="form-group">
+        <label>Crédits du cours</label>
+        <input type="number" id="courseCredit" placeholder="Eg: 50" class="form-control">
+    </div>
+
+    <button type="submit" class="btn-publish">Ajouter le cours</button>
+    <button type="button" id="cancelEditBtn" class="btn-delete" style="display:none;">Annuler</button>
+</form>
+
+
+
+    <form id="lessonForm">
+        <div class="flex-header">
+            <select id="coursId">
+                <option value="">Cours</option>
+            </select>
+            <input type="number" class="numero-input" id="numeroInput" placeholder="№">
+            <div>
+                          <input type="text" placeholder="Titre de la leçon" class="l-title" id="lessonTitle">
+            </div>
+            <div>
+                          <input type="text" placeholder="Lien Google Drive (Opsyonèl)" class="l-url" id="lessonUrl">
+            </div>
+
+
+        </div>
+
+        
+        <div id="lessons-container">
+            <!-- Toolbar TipTap - Rich and Complete -->
+            <div class="tiptap-toolbar">
+              <div class="flex">
+                                <!-- Style de texte -->
+                <div class="toolbar-group">
+                    <button type="button" onclick="formatText('bold')" title="Gras (Ctrl+B)">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button type="button" onclick="formatText('italic')" title="Italique (Ctrl+I)">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button type="button" onclick="formatText('underline')" title="Souligner (Ctrl+U)">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <button type="button" onclick="formatText('strikethrough')" title="Barré">
+                        <i class="fas fa-strikethrough"></i>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <!-- Taille de police -->
+                <div class="toolbar-group">
+                  <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+    <option value="">Taille</option>
+    <option value="12px">Petit</option>
+    <option value="16px">Normal</option>
+    <option value="20px">Grand</option>
+    <option value="28px">Très grand</option>
+</select>
+
+                </div>
+                
+                  <div class="divider"></div>
+              
+                <!-- Couleur de texte -->
+                <div class="toolbar-group">
+                    <input type="color" id="textColor" onchange="changeTextColor(this.value)" title="Couleur du texte" style="width: 36px; height: 36px; padding: 2px;">
+                </div>
+                
+                <div class="divider"></div>
+                
+                <!-- Alignement -->
+                <div class="toolbar-group">
+                    <button type="button" onclick="formatText('justifyLeft')" title="Aligner à gauche">
+                        <i class="fas fa-align-left"></i>
+                    </button>
+                    <button type="button" onclick="formatText('justifyCenter')" title="Aligner au centre">
+                        <i class="fas fa-align-center"></i>
+                    </button>
+                    <button type="button" onclick="formatText('justifyRight')" title="Aligner à droite">
+                        <i class="fas fa-align-right"></i>
+                    </button>
+                    <button type="button" onclick="formatText('justifyFull')" title="Justifier">
+                        <i class="fas fa-align-justify"></i>
+                    </button>
+                </div>
+              </div>
+              <div class="flex">
+                
+                <!-- Titres et listes -->
+                <div class="toolbar-group">
+                    <select id="headingSelect" onchange="formatText('formatBlock', this.value)" title="Style de titre">
+                        <option value="">Titre</option>
+                        <option value="h1">Titre 1</option>
+                        <option value="h2">Titre 2</option>
+                        <option value="h3">Titre 3</option>
+                        <option value="h4">Titre 4</option>
+                        <option value="p">Paragraphe</option>
+                    </select>
+                    
+                    <button type="button" onclick="formatText('insertUnorderedList')" title="Liste à puces">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button type="button" onclick="formatText('insertOrderedList')" title="Liste numérotée">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <!-- Liens, images et média -->
+                <div class="toolbar-group">
+                    <button type="button" onclick="insertLink()" title="Insérer un lien">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <button type="button" onclick="showImageModal()" title="Insérer une image">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button type="button" onclick="insertTable()" title="Insérer un tableau">
+                        <i class="fas fa-table"></i>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <!-- Autres outils -->
+                <div class="toolbar-group">
+                    <button type="button" onclick="formatText('insertHorizontalRule')" title="Ligne horizontale">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button type="button" onclick="insertCode()" title="Code">
+                        <i class="fas fa-code"></i>
+                    </button>
+                    <button type="button" onclick="formatText('superscript')" title="Exposant">
+                        <i class="fas fa-superscript"></i>
+                    </button>
+                    <button type="button" onclick="formatText('subscript')" title="Indice">
+                        <i class="fas fa-subscript"></i>
+                    </button>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <!-- Actions -->
+                <div class="toolbar-group">
+                    <button type="button" onclick="clearFormatting()" title="Effacer le formatage">
+                        <i class="fas fa-eraser"></i>
+                    </button>
+                    <button type="button" onclick="undo()" title="Annuler (Ctrl+Z)">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button type="button" onclick="redo()" title="Rétablir (Ctrl+Y)">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Zòn edite TipTap -->
+            <div 
+                id="tiptap-editor" 
+                contenteditable="true"
+                placeholder="Ekri leson an la..."
+                oninput="updateLessonContent()"
+            ></div>
+        </div>
+
+        <button type="submit" class="btn-publish" id="submitLesson">Publier sur AYIWEB</button>
+    </form>
+
+    <div id="listSection">
+        <h4 style="margin-top:0">Liste des Cours et Leçons</h4>
+        <div id="displayList"></div>
+    </div>
+
+    <div class="tab-buttons">
+        <button onclick="openTab('courseForm', this)" class="active">
+            <i class="fas fa-plus-circle"></i><br>Cours
+        </button>
+        <button onclick="openTab('lessonForm', this)">
+            <i class="fas fa-book-open"></i><br>Leçon
+        </button>
+        <button onclick="openTab('listSection', this)">
+            <i class="fas fa-list"></i><br>Liste
+        </button>
+    </div>
+
+</div>
+
+<!-- Modal pour insérer des images -->
+<div id="imageModal" class="image-modal">
+    <div class="image-modal-content">
+        <h4 style="margin-top: 0">Insérer une image</h4>
+        <input type="text" id="imageUrl" placeholder="URL de l'image (ex: https://...)" style="width: 100%;">
+        <input type="text" id="imageAlt" placeholder="Texte alternatif (optionnel)" style="width: 100%;">
+        <div class="image-modal-buttons">
+            <button type="button" onclick="insertImage()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                Insérer
+            </button>
+            <button type="button" onclick="hideImageModal()" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="coursadm.js"></script>
+<script>
+    // 1. Fonksyon pou chanje Tab
+    function openTab(id, btn) {
+        document.getElementById('courseForm').classList.remove('active-content');
+        document.getElementById('lessonForm').classList.remove('active-content');
+        document.getElementById('listSection').classList.remove('active-content');
+        
+        document.querySelectorAll('.tab-buttons button').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(id).classList.add('active-content');
+        btn.classList.add('active');
+    }
+
+    // 2. Jesyon kontni edite TipTap
+    let lessonContent = '';
+    let canUndo = false;
+    let canRedo = false;
+    let undoStack = [];
+    let redoStack = [];
+    let currentState = '';
+    
+    function updateLessonContent() {
+        const editor = document.getElementById('tiptap-editor');
+        const newContent = editor.innerHTML;
+        
+        if (newContent !== currentState) {
+            // Save current state to undo stack
+            if (currentState !== '') {
+                undoStack.push(currentState);
+            }
+            currentState = newContent;
+            redoStack = []; // Clear redo stack when new content is added
+            updateUndoRedoButtons();
+        }
+        
+        lessonContent = newContent;
+    }
+    
+    function saveState() {
+        const editor = document.getElementById('tiptap-editor');
+        undoStack.push(editor.innerHTML);
+        updateUndoRedoButtons();
+    }
+    
+    function undo() {
+        if (undoStack.length > 0) {
+            const editor = document.getElementById('tiptap-editor');
+            redoStack.push(editor.innerHTML);
+            const previousState = undoStack.pop();
+            editor.innerHTML = previousState;
+            currentState = previousState;
+            updateUndoRedoButtons();
+            updateLessonContent();
+        }
+    }
+    
+    function redo() {
+        if (redoStack.length > 0) {
+            const editor = document.getElementById('tiptap-editor');
+            undoStack.push(editor.innerHTML);
+            const nextState = redoStack.pop();
+            editor.innerHTML = nextState;
+            currentState = nextState;
+            updateUndoRedoButtons();
+            updateLessonContent();
+        }
+    }
+    
+    function updateUndoRedoButtons() {
+        canUndo = undoStack.length > 0;
+        canRedo = redoStack.length > 0;
+    }
+    
+    function formatText(command, options = null) {
+        const editor = document.getElementById('tiptap-editor');
+        saveState();
+        document.execCommand(command, false, options);
+        editor.focus();
+        updateLessonContent();
+    }
+    
+    function clearFormatting() {
+        const editor = document.getElementById('tiptap-editor');
+        saveState();
+        document.execCommand('removeFormat');
+        editor.focus();
+        updateLessonContent();
+    }
+    
+
+    
+    
+    function insertLink() {
+        const url = prompt('Antre URL la (https://...):', 'https://');
+        if (url) {
+            const editor = document.getElementById('tiptap-editor');
+            saveState();
+            document.execCommand('createLink', false, url);
+            editor.focus();
+            updateLessonContent();
+        }
+    }
+
+    
+    function insertCode() {
+        const language = prompt('Langaj (opsyonèl - ex: javascript, html, css):', '');
+        const code = prompt('Kòd la:', '');
+        
+        if (code) {
+            const editor = document.getElementById('tiptap-editor');
+            saveState();
+            
+            const pre = document.createElement('pre');
+            const codeElement = document.createElement('code');
+            
+            if (language) {
+                codeElement.className = `language-${language}`;
+            }
+            
+            codeElement.textContent = code;
+            pre.appendChild(codeElement);
+            pre.style.background = '#f8fafc';
+            pre.style.padding = '10px';
+            pre.style.borderRadius = '5px';
+            pre.style.overflowX = 'auto';
+            pre.style.fontFamily = "'Courier New', monospace";
+            pre.style.fontSize = '14px';
+            pre.style.margin = '10px 0';
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.insertNode(pre);
+                // Move cursor after the code block
+                range.setStartAfter(pre);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } else {
+                editor.appendChild(pre);
+            }
+            
+            editor.focus();
+            updateLessonContent();
+        }
+    }
+    
+    // 3. Inisyalizasyon edite a
+    document.addEventListener('DOMContentLoaded', function() {
+        const editor = document.getElementById('tiptap-editor');
+        
+        // Mete placeholder
+        editor.setAttribute('data-placeholder', 'Ekri leson an la...');
+        
+        // Gere placeholder
+        editor.addEventListener('focus', function() {
+            if (this.innerHTML === '' || this.innerHTML === '<br>') {
+                this.innerHTML = '';
+            }
+        });
+        
+        editor.addEventListener('blur', function() {
+            if (this.innerHTML === '' || this.innerHTML === '<br>') {
+                this.innerHTML = '';
+            }
+        });
+        
+        // Mete kontni an chanjman
+        editor.addEventListener('input', updateLessonContent);
+        
+        // Gere shortcut klavye
+        editor.addEventListener('keydown', function(e) {
+            // Ctrl+B pou gras
+            if (e.ctrlKey && e.key === 'b') {
+                e.preventDefault();
+                formatText('bold');
+            }
+            // Ctrl+I pou italik
+            if (e.ctrlKey && e.key === 'i') {
+                e.preventDefault();
+                formatText('italic');
+            }
+            // Ctrl+U pou souligne
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                formatText('underline');
+            }
+            // Ctrl+Z pou undo
+            if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                undo();
+            }
+            // Ctrl+Y pou redo
+            if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
+                redo();
+            }
+            // Ctrl+K pou lyen
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                insertLink();
+            }
+        });
+        
+        // Rekipere kontni depi localStorage (si egziste)
+        const savedContent = localStorage.getItem('draftLesson');
+        if (savedContent) {
+            editor.innerHTML = savedContent;
+            lessonContent = savedContent;
+            currentState = savedContent;
+        }
+        
+        // Sovgade chak 5 segonn
+        setInterval(() => {
+            if (lessonContent) {
+                localStorage.setItem('draftLesson', lessonContent);
+            }
+        }, 5000);
+        
+        // Klike deyò pou kache modal
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('imageModal');
+            if (e.target === modal) {
+                hideImageModal();
+            }
+        });
+    });
+    
+    // 4. Fonksyon pou jwenn kontni leson an (pou Firebase)
+    function getLessonContent() {
+        const editor = document.getElementById('tiptap-editor');
+        return editor.innerHTML || '';
+    }
+    
+    // 5. Fonksyon pou mete kontni nan edite a (si wap modifye)
+    function setLessonContent(content) {
+        const editor = document.getElementById('tiptap-editor');
+        editor.innerHTML = content;
+        lessonContent = content;
+        currentState = content;
+        undoStack = [];
+        redoStack = [];
+        updateUndoRedoButtons();
+    }
+    
+    // 6. Fonksyon pou netwaye edite a
+    function clearEditor() {
+        const editor = document.getElementById('tiptap-editor');
+        editor.innerHTML = '';
+        lessonContent = '';
+        currentState = '';
+        undoStack = [];
+        redoStack = [];
+        updateUndoRedoButtons();
+        localStorage.removeItem('draftLesson');
+    }
+</script>
+
+</body>
+</html>
