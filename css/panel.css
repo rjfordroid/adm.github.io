@@ -1,0 +1,40 @@
+.panelTab .user-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+}
+
+.panelTab .user-card {
+  background: #111;
+  border: 1px solid #333;
+  padding: 15px;
+  border-radius: 12px;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.panelTab .user-card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: lime;
+}
+
+.panelTab .user-card p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.panelTab .user-card select,
+.panelTab .user-card button {
+  margin-top: 8px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+}
+
+.panelTab .user-card button {
+  background: crimson;
+  color: white;
+  cursor: pointer;
+}

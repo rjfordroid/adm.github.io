@@ -1,0 +1,36 @@
+ 
+        .login-box { background: #222; padding: 25px; border-radius: 10px; width: 300px; }
+        input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: none; }
+        button { padding: 6px 12px; background: #ff3b3b; border: none; color: white; border-radius: 6px; cursor: pointer; margin-top: 5px; }
+        .admin-card { background: #222; padding: 15px; margin-top: 15px; border-radius: 10px; }
+        .comment-item { border-top: 1px solid #333; padding: 5px 0; font-size: 14px; color: #ccc; }
+        .online-badge { color: #4CAF50; font-weight: bold; margin-left: 10px; }
+        .offline-badge { color: #ff3b3b; font-weight: bold; margin-left: 10px; }
+        .btn-online { background: #4CAF50; margin-right: 5px; }
+        .btn-offline { background: #ff9800; margin-right: 5px; }
+        .button-group { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+        
+        
+        .comment-admin-list {
+    background: #333;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.comment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid #444;
+    font-size: 13px;
+}
+.comment-item:last-child { border-bottom: none; }
+.btn-del-comm {
+    background: #ff4d4d;
+    padding: 2px 6px;
+    font-size: 11px;
+    margin-left: 10px;
+}

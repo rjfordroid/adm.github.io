@@ -1,0 +1,32 @@
+/* Styling bouton tab yo */
+.btnTab {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+    overflow-x: auto;
+}
+
+.btnTab button {
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btnTab button.active {
+    background: #ff3b3b;
+    border-color: #ff3b3b;
+}
+
+/* Lojik pou kache/montre kontni */
+.tab-content {
+    display: none; /* Tout tab kache pa defo */
+}
+
+.tab-content.active {
+    display: block; /* Sèlman tab ki aktif la k ap parèt */
+}
