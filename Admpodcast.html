@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin RJFORDROID - Google Drive Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #fe2c55; --secondary: #25d366; --bg: #f0f2f5; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: #333; }
+        .admin-container { max-width: 1000px; margin: auto; }
+        
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        h1, h2, h3 { color: var(--primary); margin-top: 0; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* Style pou Upload Box */
+        .upload-section { background: #f9f9f9; padding: 15px; border: 2px dashed #ddd; border-radius: 10px; margin-bottom: 15px; text-align: center; }
+        #loader { display: none; margin: 10px 0; color: var(--primary); font-weight: bold; }
+        
+        .btn { border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; display: inline-block; text-align: center; color: white; margin: 2px; }
+        .btn-primary { background: var(--primary); width: 100%; padding: 15px; }
+        .btn-upload { background: #34495e; width: auto; margin-top: 10px; }
+        .btn-edit { background: #3498db; }
+        .btn-delete { background: #e74c3c; }
+        .btn-view { background: #9b59b6; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .status-msg { margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: bold; position: fixed; top: 20px; right: 20px; z-index: 3000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .list-item { background: #fff; border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 10px; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; }
+        .episodes-list { margin-top: 10px; padding-left: 20px; border-left: 3px solid var(--primary); display: none; background: #fafafa; padding: 10px; }
+        .ep-sub-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #ddd; font-size: 0.9rem; }
+
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; border-radius: 15px; width: 90%; max-width: 600px; position: relative; }
+        .close { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; }
+
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h1 style="text-align:center;"><i class="fas fa-user-shield"></i> RJFORDROID ADMIN</h1>
+
+    <div class="card">
+        <h2><i class="fas fa-folder-plus"></i> Kreye yon Seri</h2>
+        
+        <div class="upload-section">
+            <label><i class="fab fa-google-drive"></i> Chaje Imaj sou Google Drive</label>
+            <input type="file" id="fileInput" accept="image/*">
+            <div id="loader"><i class="fas fa-spinner fa-spin"></i> Ap moute sou Drive...</div>
+            <button class="btn btn-upload" onclick="uploadToDrive()"><i class="fas fa-cloud-upload-alt"></i> UPLOAD</button>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group"><label>Tit Seri</label><input type="text" id="serieTitle"></div>
+            <div class="form-group"><label>Banner URL (Auto-filled)</label><input type="text" id="serieBanner" placeholder="Lyen imaj la ap parèt isit la"></div>
+        </div>
+        <div class="grid-2">
+            <div class="form-group"><label>Pri (Kredi)</label><input type="number" id="seriePrice" value="50"></div>
+            <div class="form-group"><label>Deskripsyon</label><input type="text" id="serieDesc"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addSerie()">PUBLIER SERI A</button>
+    </div>
+
+    <div class="card">
+        <h2><i class="fas fa-plus-circle"></i> Ajoute Epizòd</h2>
+        <div class="form-group">
+            <label>Chwazi Seri</label>
+            <select id="selectSerie" onchange="autoFetchNextEpisode()"><option value="">-- Chwazi --</option></select>
+        </div>
+        <div class="grid-2">
+            <div class="form-group"><label>No Epizòd</label><input type="number" id="epNum"></div>
+            <div class="form-group"><label>Tit Epizòd</label><input type="text" id="epTitle"></div>
+        </div>
+        <div class="form-group"><label>Video URL (.mp4)</label><input type="text" id="epUrl"></div>
+        <button class="btn btn-primary" style="background: var(--secondary);" onclick="addEpisode()">PUBLIER EPIZÒD LA</button>
+    </div>
+
+    <div class="card">
+        <h3><i class="fas fa-database"></i> Lis Seri & Epizòd</h3>
+        <div id="dataList">Chaje done yo...</div>
+    </div>
+</div>
+
+<div id="editSerieModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('editSerieModal')">×</span>
+        <h2>Edite Seri</h2>
+        <input type="hidden" id="editSKey">
+        <div class="form-group"><label>Tit</label><input type="text" id="editSTitre"></div>
+        <div class="form-group"><label>Banner URL</label><input type="text" id="editSBanner"></div>
+        <div class="form-group"><label>Pri</label><input type="number" id="editSPrice"></div>
+        <div class="form-group"><label>Deskripsyon</label><textarea id="editSDesc" rows="3"></textarea></div>
+        <button class="btn btn-primary" onclick="saveSerieEdit()">SOVE MODIFIKASYON</button>
+    </div>
+</div>
+
+<div id="status" class="status-msg"></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    // Konfigirasyon Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAQeHWr_vUiQmVVgJJ_cOF9qrCCLd7IJNc",
+        authDomain: "ayiweb.firebaseapp.com",
+        databaseURL: "https://ayiweb-default-rtdb.firebaseio.com",
+        projectId: "ayiweb",
+        storageBucket: "ayiweb.appspot.com",
+        messagingSenderId: "115054504556",
+        appId: "1:115054504556:web:ccd713ba01dd8f02830649"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ==========================================
+    // LOGIK GOOGLE DRIVE UPLOAD
+    // ==========================================
+    function uploadToDrive() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (!file) return showStatus("Tanpri chwazi yon imaj", "orange");
+
+        document.getElementById("loader").style.display = "block";
+
+        const reader = new FileReader();
+        reader.onload = function () {
+            const base64Data = reader.result.split(",")[1];
+            const formData = new FormData();
+            formData.append("file", base64Data);
+            formData.append("name", file.name);
+            formData.append("type", file.type);
+
+            fetch("https://script.google.com/macros/s/AKfycbxHjVBNTOlj6xBUp_fl-aVbPSFZRiMQB77_YIvFeB79uq2Hx9P_r7HADZTYj9WElsXkug/exec", {
+                method: "POST",
+                body: formData
+            })
+            .then(r => r.json())
+            .then(res => {
+                document.getElementById("loader").style.display = "none";
+                if (res.success) {
+                    const fileId = res.url.match(/\/d\/([^\/]+)/)?.[1] || "";
+                    // Fòma direct thumbnail k ap mache pou afiche imaj
+                    const directLink = `https://lh3.googleusercontent.com/d/${fileId}`;
+                    document.getElementById("serieBanner").value = directLink;
+                    showStatus("Imaj monte byen!", "green");
+                } else {
+                    alert("Erreur Drive: " + res.error);
+                }
+            })
+            .catch(err => {
+                document.getElementById("loader").style.display = "none";
+                alert("Erreur de connexion: " + err);
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ==========================================
+    // LOGIK FIREBASE
+    // ==========================================
+
+    function addSerie() {
+        const titre = document.getElementById('serieTitle').value;
+        const banner = document.getElementById('serieBanner').value;
+        const desc = document.getElementById('serieDesc').value;
+        const price = document.getElementById('seriePrice').value;
+        
+        if(!titre || !banner) return showStatus("Tit ak Imaj obligatwa!", "orange");
+
+        db.ref('RJFORDROID/SERIES').push({
+            titre, banner, description: desc, price: parseInt(price), timestamp: Date.now()
+        }).then(() => { 
+            showStatus("Seri pibliye!", "green"); 
+            clearInputs(['serieTitle', 'serieBanner', 'serieDesc', 'fileInput']); 
+        });
+    }
+
+    function autoFetchNextEpisode() {
+        const skey = document.getElementById('selectSerie').value;
+        if(!skey) return;
+        db.ref(`RJFORDROID/SERIES/${skey}/EPISODES`).once('value', snap => {
+            const data = snap.val();
+            document.getElementById('epNum').value = data ? Math.max(...Object.values(data).map(e => parseInt(e.episodeNumber) || 0)) + 1 : 1;
+        });
+    }
+
+    function addEpisode() {
+        const skey = document.getElementById('selectSerie').value;
+        const num = document.getElementById('epNum').value;
+        const title = document.getElementById('epTitle').value;
+        const url = document.getElementById('epUrl').value;
+        if(!skey || !num || !title || !url) return showStatus("Ranpli tout bwat yo!", "orange");
+        db.ref(`RJFORDROID/SERIES/${skey}/EPISODES`).push({
+            episodeNumber: parseInt(num), title, url, timestamp: Date.now()
+        }).then(() => { showStatus("Epizòd pibliye!", "green"); clearInputs(['epTitle', 'epUrl']); autoFetchNextEpisode(); });
+    }
+
+    // RENDER LIS SERI & EPIZÒD
+    db.ref('RJFORDROID/SERIES').on('value', snap => {
+        const data = snap.val();
+        const select = document.getElementById('selectSerie');
+        const list = document.getElementById('dataList');
+        const oldVal = select.value;
+        select.innerHTML = '<option value="">-- Chwazi --</option>';
+        list.innerHTML = "";
+
+        if(data) {
+            Object.keys(data).forEach(key => {
+                const s = data[key];
+                select.innerHTML += `<option value="${key}">${s.titre}</option>`;
+                
+                let epHTML = "";
+                if(s.EPISODES) {
+                    Object.keys(s.EPISODES).forEach(eKey => {
+                        const ep = s.EPISODES[eKey];
+                        epHTML += `
+                            <div class="ep-sub-item">
+                                <span><b>Ep ${ep.episodeNumber}:</b> ${ep.title}</span>
+                                <div>
+                                    <button class="btn btn-delete" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteEpisode('${key}', '${eKey}')"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>`;
+                    });
+                } else { epHTML = "<small>Pa gen epizòd.</small>"; }
+
+                list.innerHTML += `
+                    <div class="list-item">
+                        <div class="item-header">
+                            <div><strong>${s.titre}</strong></div>
+                            <div>
+                                <button class="btn btn-view" onclick="toggleEp('${key}')"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-edit" onclick="openEditSerie('${key}')"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-delete" onclick="deleteSerie('${key}')"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="episodes-list" id="ep-list-${key}">${epHTML}</div>
+                    </div>`;
+            });
+            select.value = oldVal;
+        }
+    });
+
+    // EDIT SERI
+    function openEditSerie(key) {
+        db.ref(`RJFORDROID/SERIES/${key}`).once('value', snap => {
+            const s = snap.val();
+            if(!s) return;
+            document.getElementById('editSKey').value = key;
+            document.getElementById('editSTitre').value = s.titre || "";
+            document.getElementById('editSBanner').value = s.banner || "";
+            document.getElementById('editSPrice').value = s.price || 0;
+            document.getElementById('editSDesc').value = s.description || "";
+            document.getElementById('editSerieModal').style.display = "block";
+        });
+    }
+
+    function saveSerieEdit() {
+        const key = document.getElementById('editSKey').value;
+        const updates = {
+            titre: document.getElementById('editSTitre').value,
+            banner: document.getElementById('editSBanner').value,
+            price: parseInt(document.getElementById('editSPrice').value),
+            description: document.getElementById('editSDesc').value
+        };
+        db.ref(`RJFORDROID/SERIES/${key}`).update(updates).then(() => { 
+            showStatus("Sove!", "green"); 
+            closeModal('editSerieModal'); 
+        });
+    }
+
+    // SUPPRIMER
+    function deleteSerie(key) { if(confirm("Supprimer la série et ses épisodes ?")) db.ref(`RJFORDROID/SERIES/${key}`).remove(); }
+    function deleteEpisode(sKey, eKey) { if(confirm("Supprimer cet épisode ?")) db.ref(`RJFORDROID/SERIES/${sKey}/EPISODES/${eKey}`).remove(); }
+
+    // UTILS
+    function showStatus(msg, color) {
+        const s = document.getElementById('status');
+        s.innerText = msg;
+        s.style.display = 'block';
+        s.style.background = (color === "green") ? "#2ecc71" : "#f39c12";
+        setTimeout(() => s.style.display = 'none', 3000);
+    }
+    function clearInputs(ids) { ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ""; }); }
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    function toggleEp(key) { const el = document.getElementById(`ep-list-${key}`); el.style.display = (el.style.display === "block") ? "none" : "block"; }
+
+    // Pou klike andeyò modal la pou l fèmen
+    window.onclick = function(event) {
+        if (event.target.className === 'modal') {
+            event.target.style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>
